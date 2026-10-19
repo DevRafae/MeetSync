@@ -1,0 +1,48 @@
+classDiagram
+    class Usuario {
+        +int id
+        +string nome
+        +string email
+        +string tipo
+        +cadastrar()
+        +consultarDisponibilidade(data, horario)
+        +reservarSala()
+        +cancelarReserva()
+    }
+
+    class Administrador {
+        +cadastrarSala()
+        +ativarSala()
+        +inativarSala()
+    }
+
+    class Sala {
+        +int id
+        +string nome
+        +int capacidade
+        +boolean ativa
+        +consultarRecursos()
+        +alterarStatus()
+    }
+
+    class Recurso {
+        +int id
+        +string descricao
+    }
+
+    class Reserva {
+        +int id
+        +date data
+        +time horaInicio
+        +time horaFim
+        +string status
+        +criar()
+        +cancelar()
+        +validarConflito()
+    }
+
+    Usuario <|-- Administrador
+    Usuario "1" --> "0..*" Reserva : realiza
+    Sala "1" --> "0..*" Reserva : recebe
+    Sala "1" o-- "0..*" Recurso : possui
+    Reserva ..> Sala : verifica disponibilidade
