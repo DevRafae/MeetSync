@@ -1,0 +1,12 @@
+{
+  "name": "meetsync-web-typescript",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "compilar": "tsc",
+    "verificar": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}
