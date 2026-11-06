@@ -1,72 +1,13 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MeetSync — Reserva de Salas</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="js/app.js" defer></script>
-
-</head>
-<body>
-  <main class="shell">
-    <header class="hero">
-      <div>
-        <div class="eyebrow">Projeto interdisciplinar de orientação a objetos</div>
-        <h1>MeetSync</h1>
-        <p>Sistema web de reserva de salas desenvolvido com TypeScript, HTML e CSS.</p>
-      </div>
-      <div class="brand-mark">MS / salas</div>
-    </header>
-
-    <section class="stats" aria-label="Resumo do sistema">
-      <div class="stat"><strong id="totalSalas">0</strong><span>salas cadastradas</span></div>
-      <div class="stat"><strong id="salasAtivas">0</strong><span>salas ativas</span></div>
-      <div class="stat"><strong id="totalReservas">0</strong><span>reservas criadas</span></div>
-      <div class="stat"><strong id="totalUsuarios">0</strong><span>usuários cadastrados</span></div>
-    </section>
-
-    <section class="layout">
-      <article class="panel">
-        <div class="panel-head"><div><h2>Cadastrar sala</h2><p>Exemplo de manipulação de formulário com TypeScript.</p></div></div>
-        <form id="formSala">
-          <div class="form-grid">
-            <div class="field"><label for="nomeSala">Nome da sala</label><input id="nomeSala" required placeholder="Ex.: Sala Criativa"></div>
-            <div class="field"><label for="capacidade">Capacidade</label><input id="capacidade" type="number" min="1" required placeholder="10"></div>
-            <div class="field full"><label>Recursos</label><div class="checks"><label class="check"><input type="checkbox" name="recursos" value="Projetor">Projetor</label><label class="check"><input type="checkbox" name="recursos" value="TV">TV</label><label class="check"><input type="checkbox" name="recursos" value="Ar-condicionado">Ar-condicionado</label></div></div>
-            <div class="field full"><label class="check"><input id="ativaSala" type="checkbox" checked>Sala ativa para reserva</label></div>
-          </div>
-          <div class="actions"><button class="btn primary" type="submit">Cadastrar sala</button></div>
-        </form>
-      </article>
-
-      <article class="panel">
-        <div class="panel-head"><div><h2>Cadastrar usuário</h2><p>Os dados ficam em memória enquanto a página estiver aberta.</p></div></div>
-        <form id="formUsuario">
-          <div class="form-grid">
-            <div class="field full"><label for="nomeUsuario">Nome completo</label><input id="nomeUsuario" required placeholder="Ex.: Ana Souza"></div>
-            <div class="field full"><label for="emailUsuario">E-mail</label><input id="emailUsuario" type="email" required placeholder="ana@empresa.com"></div>
-            <div class="field full"><label for="tipoUsuario">Perfil</label><select id="tipoUsuario"><option>Usuário Comum</option><option>Administrador</option></select></div>
-          </div>
-          <div class="actions"><button class="btn secondary" type="submit">Cadastrar usuário</button></div>
-        </form>
-      </article>
-
-      <article class="panel">
-        <div class="panel-head"><div><h2>Salas disponíveis</h2><p>As classes Sala, Recurso e Administrador organizam os dados.</p></div></div>
-        <div id="salas" class="room-list"></div>
-      </article>
-
-      <article class="panel">
-        <div class="panel-head"><div><h2>Usuários</h2><p>Usuários cadastrados na aplicação.</p></div></div>
-        <div id="usuarios" class="user-list"></div>
-      </article>
-
-      <article class="panel full">
-        <div class="panel-head"><div><h2>Reservas</h2><p>A classe Reserva relaciona usuário, sala, data e horário.</p></div></div>
-        <div id="reservas" class="reservation-list"></div>
-      </article>
-    </section>
-  </main>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="MeetSync — sistema de reserva de salas" />
+    <title>MeetSync — Reserva de Salas</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/app.ts"></script>
+  </body>
 </html>
