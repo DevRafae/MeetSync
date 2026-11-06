@@ -1,4 +1,6 @@
-/*1. CONFIGURAÇÕES GLOBAIS E VARIÁVEIS*/
+/* ==========================================
+   1. CONFIGURAÇÕES GLOBAIS E VARIÁVEIS DE COR
+   ========================================== */
 :root {
   --primary: #ff5d12;
   --secondary: #193a5f;
@@ -35,8 +37,9 @@ button {
   cursor: pointer;
 }
 
-
-/*2. LAYOUT E ESTRUTURA PRINCIPAL*/
+/* ==========================================
+   2. ESTRUTURA GERAL DA PÁGINA (CONTAINER E LAYOUT)
+   ========================================== */
 .shell {
   max-width: 1240px;
   margin: 0 auto;
@@ -49,8 +52,9 @@ button {
   gap: 20px;
 }
 
-
-/*3. HERO SECTION*/
+/* ==========================================
+   3. CABEÇALHO (HERO)
+   ========================================== */
 .hero {
   display: flex;
   justify-content: space-between;
@@ -93,8 +97,9 @@ button {
   white-space: nowrap;
 }
 
-
-/*4. COMPONENTES: STATS, PAINÉIS E CARDS*/
+/* ==========================================
+   4. BLOCOS, PAINÉIS E CARDS DE INFORMAÇÃO
+   ========================================== */
 .stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -187,8 +192,9 @@ button {
   font-size: .88rem;
 }
 
-
-/*5. FORMULÁRIOS E CAMPOS*/
+/* ==========================================
+   5. FORMULÁRIOS, CAMPOS E ENTRADAS
+   ========================================== */
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -245,8 +251,9 @@ button {
   font-size: .88rem;
 }
 
-
-/* 6. BOTÕES E AÇÕES */
+/* ==========================================
+   6. BOTÕES E AÇÕES
+   ========================================== */
 .actions {
   display: flex;
   justify-content: flex-end;
@@ -291,8 +298,9 @@ button {
   font-size: .8rem;
 }
 
-
-/*7. ELEMENTOS AUXILIARES (Badges, Chips, Tabs, Toasts, etc.)*/
+/* ==========================================
+   7. COMPONENTES MENORES (Badges, Chips, Tabs, Toasts)
+   ========================================== */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -382,8 +390,9 @@ button {
   border: 0;
 }
 
-
-/*8. MEDIA QUERIES (Responsividade)*/
+/* ==========================================
+   8. RESPONSIVIDADE (Media Queries)
+   ========================================== */
 @media (max-width: 850px) {
   .layout {
     grid-template-columns: 1fr;
