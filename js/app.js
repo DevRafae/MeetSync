@@ -1,7 +1,6 @@
 "use strict";
 class Recurso {
-    constructor(id, descricao) {
-        this.id = id;
+    constructor(descricao) {
         this.descricao = descricao;
     }
 }
@@ -13,28 +12,17 @@ class Sala {
         this.ativa = ativa;
         this.recursos = recursos;
     }
-    consultarRecursos() {
-        return this.recursos;
-    }
-    alterarStatus(ativa) {
-        this.ativa = ativa;
-    }
+    alterarStatus(ativa) { this.ativa = ativa; }
 }
 class Usuario {
-    constructor(id, nome, email, tipo) {
+    constructor(id, nome, email, senha, tipo) {
         this.id = id;
         this.nome = nome;
         this.email = email;
+        this.senha = senha;
         this.tipo = tipo;
     }
-}
-class Administrador extends Usuario {
-    constructor(id, nome, email) {
-        super(id, nome, email, 'Administrador');
-    }
-    cadastrarSala(id, nome, capacidade, recursos, ativa) {
-        return new Sala(id, nome, capacidade, ativa, recursos);
-    }
+    ehAdministrador() { return this.tipo === 'Administrador'; }
 }
 class Reserva {
     constructor(id, data, horaInicio, horaFim, status, usuario, sala) {
@@ -46,122 +34,81 @@ class Reserva {
         this.usuario = usuario;
         this.sala = sala;
     }
-    cancelar() {
-        this.status = 'Cancelada';
-    }
-    validarConflito(reservas) {
-        const inicio = converterHora(this.horaInicio);
-        const fim = converterHora(this.horaFim);
-        return reservas.some((reserva) => {
-            if (reserva.status !== 'Ativa' || reserva.sala.id !== this.sala.id || reserva.data !== this.data) {
-                return false;
-            }
-            return inicio < converterHora(reserva.horaFim) && fim > converterHora(reserva.horaInicio);
-        });
+    cancelar() { this.status = 'Cancelada'; }
+    temConflito(comparacoes) {
+        const inicio = minutos(this.horaInicio);
+        const fim = minutos(this.horaFim);
+        return comparacoes.some((reserva) => reserva.status === 'Ativa' && reserva.sala.id === this.sala.id && reserva.data === this.data && inicio < minutos(reserva.horaFim) && fim > minutos(reserva.horaInicio));
     }
 }
-const administrador = new Administrador(1, 'Admin MeetSync', 'admin@meetsync.local');
-const salas = [administrador.cadastrarSala(1, 'Sala Horizonte', 10, [new Recurso(1, 'Projetor'), new Recurso(2, 'TV')], true)];
-const usuarios = [administrador];
+const usuarios = [
+    new Usuario(1, 'Administrador MeetSync', 'admin@meetsync.com', 'admin123', 'Administrador'),
+    new Usuario(2, 'Usuário Demonstração', 'usuario@meetsync.com', 'usuario123', 'Usuário Comum'),
+];
+const salas = [new Sala(1, 'Sala Horizonte', 10, true, [new Recurso('Projetor'), new Recurso('TV')]), new Sala(2, 'Sala Aurora', 6, true, [new Recurso('Ar-condicionado')])];
 const reservas = [];
-let proximoIdSala = 2;
-let proximoIdUsuario = 2;
+let usuarioAtual = null;
+let proximoIdSala = 3;
+let proximoIdUsuario = 3;
 let proximoIdReserva = 1;
-function converterHora(hora) {
-    const [horas, minutos] = hora.split(':').map(Number);
-    return horas * 60 + minutos;
+function minutos(hora) { const [h, m] = hora.split(':').map(Number); return h * 60 + m; }
+function escapar(texto) { return texto.replace(/[&<>'"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c] ?? c)); }
+function dataBR(data) { return new Date(`${data}T00:00:00`).toLocaleDateString('pt-BR'); }
+function mostrar(mensagem) { window.alert(mensagem); }
+function renderLogin() {
+    document.querySelector('#app').innerHTML = `<main class="login-shell"><section class="login-card"><div class="eyebrow">Gestão inteligente de espaços</div><h1>MeetSync</h1><p class="login-subtitle">Entre para acessar o sistema de reserva de salas.</p><form id="formLogin"><div class="field"><label for="emailLogin">E-mail</label><input id="emailLogin" type="email" required placeholder="seu@email.com"></div><div class="field"><label for="senhaLogin">Senha</label><input id="senhaLogin" type="password" required placeholder="Sua senha"></div><button class="btn primary full-button" type="submit">Entrar no sistema</button></form><div class="demo-box"><strong>Acessos para demonstração</strong><br>Administrador: admin@meetsync.com / admin123<br>Usuário: usuario@meetsync.com / usuario123</div></section></main>`;
+    document.querySelector('#formLogin').addEventListener('submit', (evento) => { evento.preventDefault(); const email = document.querySelector('#emailLogin').value.trim(); const senha = document.querySelector('#senhaLogin').value; const usuario = usuarios.find((item) => item.email === email && item.senha === senha); if (!usuario) {
+        mostrar('E-mail ou senha inválidos.');
+        return;
+    } usuarioAtual = usuario; renderPainel(); });
 }
-function horarioValido(inicio, fim) {
-    return Boolean(inicio && fim) && converterHora(fim) > converterHora(inicio);
+function renderPainel() {
+    if (!usuarioAtual) {
+        renderLogin();
+        return;
+    }
+    const admin = usuarioAtual.ehAdministrador();
+    document.querySelector('#app').innerHTML = `<main class="shell"><header class="hero"><div><div class="eyebrow">${admin ? 'Painel administrativo' : 'Área do usuário'}</div><h1>MeetSync</h1><p>Olá, ${escapar(usuarioAtual.nome)}. ${admin ? 'Gerencie salas, usuários e reservas.' : 'Consulte salas disponíveis e faça suas reservas.'}</p></div><div class="header-actions"><span class="role-label">${usuarioAtual.tipo}</span><button class="btn light small" id="sair">Sair</button></div></header><section class="stats"><div class="stat"><strong>${salas.filter((s) => s.ativa).length}</strong><span>salas disponíveis</span></div><div class="stat"><strong>${reservas.filter((r) => r.status === 'Ativa').length}</strong><span>reservas ativas</span></div><div class="stat"><strong>${reservas.filter((r) => r.usuario.id === usuarioAtual.id).length}</strong><span>minhas reservas</span></div><div class="stat"><strong>${usuarios.length}</strong><span>usuários cadastrados</span></div></section><section class="layout">${admin ? renderAdmin() : renderUsuario()}</section></main>`;
+    document.querySelector('#sair').addEventListener('click', () => { usuarioAtual = null; renderLogin(); });
+    if (admin)
+        bindAdmin();
+    else
+        bindUsuario();
 }
-function escapar(texto) {
-    return texto.replace(/[&<>'"]/g, (caractere) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[caractere] ?? caractere));
+function renderAdmin() {
+    return `<article class="panel"><div class="panel-head"><div><h2>Cadastrar sala</h2><p>Somente administradores podem alterar a estrutura.</p></div></div><form id="formSala"><div class="form-grid"><div class="field"><label for="nomeSala">Nome da sala</label><input id="nomeSala" required placeholder="Ex.: Sala Criativa"></div><div class="field"><label for="capacidade">Capacidade</label><input id="capacidade" type="number" min="1" required placeholder="10"></div><div class="field full"><label>Recursos</label><div class="checks"><label class="check"><input type="checkbox" name="recursos" value="Projetor">Projetor</label><label class="check"><input type="checkbox" name="recursos" value="TV">TV</label><label class="check"><input type="checkbox" name="recursos" value="Ar-condicionado">Ar-condicionado</label></div></div></div><div class="actions"><button class="btn primary" type="submit">Cadastrar sala</button></div></form></article><article class="panel"><div class="panel-head"><div><h2>Cadastrar usuário</h2><p>Crie acessos de administradores ou usuários comuns.</p></div></div><form id="formUsuario"><div class="form-grid"><div class="field full"><label for="nomeUsuario">Nome</label><input id="nomeUsuario" required></div><div class="field full"><label for="emailUsuario">E-mail</label><input id="emailUsuario" type="email" required></div><div class="field full"><label for="senhaUsuario">Senha</label><input id="senhaUsuario" required></div><div class="field full"><label for="tipoUsuario">Perfil</label><select id="tipoUsuario"><option>Usuário Comum</option><option>Administrador</option></select></div></div><div class="actions"><button class="btn secondary" type="submit">Cadastrar usuário</button></div></form></article><article class="panel"><div class="panel-head"><div><h2>Salas e permissões</h2><p>Ative ou inative salas para os usuários.</p></div></div><div id="salas" class="room-list"></div></article><article class="panel"><div class="panel-head"><div><h2>Usuários cadastrados</h2></div></div><div id="usuarios" class="user-list"></div></article><article class="panel full"><div class="panel-head"><div><h2>Todas as reservas</h2><p>Visão administrativa do sistema.</p></div></div><div id="reservas" class="reservation-list"></div></article>`;
 }
-function atualizarResumo() {
-    document.querySelector('#totalSalas').textContent = String(salas.length);
-    document.querySelector('#salasAtivas').textContent = String(salas.filter((sala) => sala.ativa).length);
-    document.querySelector('#totalReservas').textContent = String(reservas.length);
-    document.querySelector('#totalUsuarios').textContent = String(usuarios.length);
+function renderUsuario() {
+    return `<article class="panel full"><div class="panel-head"><div><h2>Salas disponíveis</h2><p>Você pode reservar somente salas ativas.</p></div></div><div id="salas" class="room-list room-grid"></div></article><article class="panel full"><div class="panel-head"><div><h2>Minhas reservas</h2><p>Consulte ou cancele seus próprios agendamentos.</p></div></div><div id="reservas" class="reservation-list"></div></article>`;
 }
-function renderizarSalas() {
+function renderSalas() {
     const lista = document.querySelector('#salas');
-    lista.innerHTML = salas.map((sala) => `
-    <div class="room-card">
-      <div class="room-top"><div><h3>${escapar(sala.nome)}</h3><p>Capacidade para ${sala.capacidade} pessoas</p></div><span class="badge ${sala.ativa ? 'active' : 'cancelled'}">${sala.ativa ? 'Ativa' : 'Inativa'}</span></div>
-      <div class="chips">${sala.recursos.length ? sala.recursos.map((recurso) => `<span class="chip">${escapar(recurso.descricao)}</span>`).join('') : '<span class="chip">Sem recursos</span>'}</div>
-      <div class="actions"><button class="btn small ${sala.ativa ? 'danger' : 'ghost'}" data-status="${sala.id}">${sala.ativa ? 'Inativar' : 'Ativar'} sala</button>${sala.ativa ? `<button class="btn small primary" data-reserva="${sala.id}">Reservar</button>` : ''}</div>
-    </div>`).join('');
-    document.querySelectorAll('[data-status]').forEach((botao) => botao.addEventListener('click', () => {
-        const sala = salas.find((item) => item.id === Number(botao.dataset.status));
-        if (sala) {
-            sala.alterarStatus(!sala.ativa);
-            renderizarTudo();
-        }
-    }));
-    document.querySelectorAll('[data-reserva]').forEach((botao) => botao.addEventListener('click', () => abrirFormularioReserva(Number(botao.dataset.reserva))));
-}
-function renderizarUsuarios() {
-    const lista = document.querySelector('#usuarios');
-    lista.innerHTML = usuarios.map((usuario) => `<div class="reservation-card"><div class="room-top"><div><strong>${escapar(usuario.nome)}</strong><p>${escapar(usuario.email)}</p></div><span class="badge ${usuario.tipo === 'Administrador' ? 'active' : 'cancelled'}">${usuario.tipo}</span></div></div>`).join('');
-}
-function renderizarReservas() {
-    const lista = document.querySelector('#reservas');
-    lista.innerHTML = reservas.map((reserva) => `<div class="reservation-card"><div class="reservation-top"><div><strong>${escapar(reserva.sala.nome)}</strong><p>${reserva.data} · ${reserva.horaInicio}–${reserva.horaFim} · ${escapar(reserva.usuario.nome)}</p></div><span class="badge ${reserva.status === 'Ativa' ? 'active' : 'cancelled'}">${reserva.status}</span></div>${reserva.status === 'Ativa' ? `<div class="actions"><button class="btn small danger" data-cancelar="${reserva.id}">Cancelar reserva</button></div>` : ''}</div>`).join('') || '<div class="empty">Nenhuma reserva criada.</div>';
-    document.querySelectorAll('[data-cancelar]').forEach((botao) => botao.addEventListener('click', () => {
-        const reserva = reservas.find((item) => item.id === Number(botao.dataset.cancelar));
-        if (reserva) {
-            reserva.cancelar();
-            renderizarTudo();
-        }
-    }));
-}
-function abrirFormularioReserva(salaId) {
-    const sala = salas.find((item) => item.id === salaId);
-    if (!sala)
+    if (!lista)
         return;
-    const data = window.prompt('Data da reserva (AAAA-MM-DD):', new Date().toISOString().slice(0, 10));
-    if (!data)
-        return;
-    const inicio = window.prompt('Horário inicial (HH:MM):', '14:00');
-    const fim = window.prompt('Horário final (HH:MM):', '15:00');
-    if (!inicio || !fim || !horarioValido(inicio, fim)) {
-        window.alert('Informe um intervalo de horário válido.');
-        return;
-    }
-    const usuario = usuarios[usuarios.length - 1];
-    const reserva = new Reserva(proximoIdReserva++, data, inicio, fim, 'Ativa', usuario, sala);
-    if (reserva.validarConflito(reservas)) {
-        window.alert('Conflito de horário detectado para esta sala.');
-        return;
-    }
-    reservas.push(reserva);
-    renderizarTudo();
+    const visiveis = usuarioAtual?.ehAdministrador() ? salas : salas.filter((sala) => sala.ativa);
+    lista.innerHTML = visiveis.map((sala) => `<div class="room-card"><div class="room-top"><div><h3>${escapar(sala.nome)}</h3><p>Capacidade para ${sala.capacidade} pessoas</p></div><span class="badge ${sala.ativa ? 'active' : 'cancelled'}">${sala.ativa ? 'Ativa' : 'Inativa'}</span></div><div class="chips">${sala.recursos.map((r) => `<span class="chip">${escapar(r.descricao)}</span>`).join('') || '<span class="chip">Sem recursos</span>'}</div><div class="actions">${usuarioAtual?.ehAdministrador() ? `<button class="btn small ${sala.ativa ? 'danger' : 'ghost'}" data-toggle="${sala.id}">${sala.ativa ? 'Inativar' : 'Ativar'} sala</button>` : `<button class="btn small primary" data-reservar="${sala.id}">Reservar</button>`}</div></div>`).join('') || '<div class="empty">Nenhuma sala disponível.</div>';
+    document.querySelectorAll('[data-toggle]').forEach((b) => b.addEventListener('click', () => { const s = salas.find((item) => item.id === Number(b.dataset.toggle)); if (s) {
+        s.alterarStatus(!s.ativa);
+        renderPainel();
+    } }));
+    document.querySelectorAll('[data-reservar]').forEach((b) => b.addEventListener('click', () => criarReserva(Number(b.dataset.reservar))));
 }
-function renderizarTudo() {
-    atualizarResumo();
-    renderizarSalas();
-    renderizarUsuarios();
-    renderizarReservas();
-}
-document.querySelector('#formSala').addEventListener('submit', (evento) => {
-    evento.preventDefault();
-    const nome = document.querySelector('#nomeSala').value.trim();
-    const capacidade = Number(document.querySelector('#capacidade').value);
-    const ativa = document.querySelector('#ativaSala').checked;
-    const recursos = Array.from(document.querySelectorAll('input[name="recursos"]:checked')).map((input, indice) => new Recurso(indice + 10, input.value));
-    const sala = administrador.cadastrarSala(proximoIdSala++, nome, capacidade, recursos, ativa);
-    salas.push(sala);
-    renderizarTudo();
-    evento.target.reset();
-    document.querySelector('#ativaSala').checked = true;
-});
-document.querySelector('#formUsuario').addEventListener('submit', (evento) => {
-    evento.preventDefault();
-    const nome = document.querySelector('#nomeUsuario').value.trim();
-    const email = document.querySelector('#emailUsuario').value.trim();
-    const tipo = document.querySelector('#tipoUsuario').value;
-    usuarios.push(new Usuario(proximoIdUsuario++, nome, email, tipo));
-    renderizarTudo();
-    evento.target.reset();
-});
-renderizarTudo();
+function renderUsuarios() { const lista = document.querySelector('#usuarios'); if (lista)
+    lista.innerHTML = usuarios.map((u) => `<div class="reservation-card"><div class="room-top"><div><strong>${escapar(u.nome)}</strong><p>${escapar(u.email)}</p></div><span class="badge ${u.ehAdministrador() ? 'active' : 'cancelled'}">${u.tipo}</span></div></div>`).join(''); }
+function renderReservas() { const lista = document.querySelector('#reservas'); if (!lista || !usuarioAtual)
+    return; const visiveis = usuarioAtual.ehAdministrador() ? reservas : reservas.filter((r) => r.usuario.id === usuarioAtual.id); lista.innerHTML = visiveis.map((r) => `<div class="reservation-card"><div class="reservation-top"><div><strong>${escapar(r.sala.nome)}</strong><p>${dataBR(r.data)} · ${r.horaInicio}–${r.horaFim} · ${escapar(r.usuario.nome)}</p></div><span class="badge ${r.status === 'Ativa' ? 'active' : 'cancelled'}">${r.status}</span></div>${r.status === 'Ativa' ? `<div class="actions"><button class="btn small danger" data-cancelar="${r.id}">Cancelar reserva</button></div>` : ''}</div>`).join('') || '<div class="empty">Nenhuma reserva encontrada.</div>'; document.querySelectorAll('[data-cancelar]').forEach((b) => b.addEventListener('click', () => { const r = reservas.find((item) => item.id === Number(b.dataset.cancelar)); if (r) {
+    r.cancelar();
+    renderPainel();
+} })); }
+function renderTudo() { renderSalas(); renderUsuarios(); renderReservas(); }
+function criarReserva(salaId) { const sala = salas.find((s) => s.id === salaId); if (!sala || !usuarioAtual)
+    return; const data = window.prompt('Data da reserva (AAAA-MM-DD):', new Date().toISOString().slice(0, 10)); const inicio = window.prompt('Horário inicial (HH:MM):', '14:00'); const fim = window.prompt('Horário final (HH:MM):', '15:00'); if (!data || !inicio || !fim || minutos(fim) <= minutos(inicio)) {
+    mostrar('Informe uma data e um horário válido.');
+    return;
+} const reserva = new Reserva(proximoIdReserva++, data, inicio, fim, 'Ativa', usuarioAtual, sala); if (reserva.temConflito(reservas)) {
+    mostrar('Conflito de horário: esta sala já está reservada nesse período.');
+    return;
+} reservas.push(reserva); renderPainel(); }
+function bindAdmin() { document.querySelector('#formSala')?.addEventListener('submit', (e) => { e.preventDefault(); const nome = document.querySelector('#nomeSala').value.trim(); const capacidade = Number(document.querySelector('#capacidade').value); const recursos = Array.from(document.querySelectorAll('input[name="recursos"]:checked')).map((input) => new Recurso(input.value)); salas.push(new Sala(proximoIdSala++, nome, capacidade, true, recursos)); renderPainel(); }); document.querySelector('#formUsuario')?.addEventListener('submit', (e) => { e.preventDefault(); usuarios.push(new Usuario(proximoIdUsuario++, document.querySelector('#nomeUsuario').value.trim(), document.querySelector('#emailUsuario').value.trim(), document.querySelector('#senhaUsuario').value, document.querySelector('#tipoUsuario').value)); renderPainel(); }); renderTudo(); }
+function bindUsuario() { renderTudo(); }
+renderLogin();
